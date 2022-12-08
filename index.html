@@ -37,15 +37,17 @@
             projection: 'mercator'
         });
 
-let popup;
+        let popup;
 
         // add the custom style layer to the map
         map.on('load', () => {
 
-            // map.getStyle().layers.filter(d => d.source === "composite").forEach(d => {
-            //     console.log('d', d);
-            //     map.setLayoutProperty(d.id, 'visibility', 'none');
-            // })
+            map.getStyle().layers.filter(d => d.id.includes("-label") && d.id !== 'country-label').forEach(d => {
+                console.log('d', d);
+                map.setLayoutProperty(d.id, 'visibility', 'none');
+            })
+
+
 
             Promise.all([
                 d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSqQjy9hjLj-g8SP94pYNZRyxaVMsj_TUEtDpApbxQHrlF-AtEgLJ9_rMKi4PX7mscvgLTRNvOqFlG7/pub?output=csv"),
@@ -207,7 +209,7 @@ let popup;
             });
 
             // map.on('click', 'unclustered-point', showPopup(e));
-            
+
             map.on('mouseenter', 'unclustered-point', showPopup);
             map.on('mouseleave', 'unclustered-point', () => { popup && popup.remove() });
 
