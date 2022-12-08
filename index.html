@@ -198,7 +198,7 @@
             });
 
             map.on('click', 'maine', (e) => {
-                console.log('e', e.features[0]);
+                console.log('name = ', e.features[0].properties.name);
             })
 
             map.on('click', 'clusters', (e) => {
