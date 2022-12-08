@@ -37,6 +37,7 @@
             projection: 'mercator'
         });
 
+let popup;
 
         // add the custom style layer to the map
         map.on('load', () => {
@@ -65,7 +66,7 @@
                         if (countries.includes(name.toLowerCase().trim())) {
                             console.log('name', name);
                         }
-                        d.properties.color = countries.includes(name.toLowerCase().trim()) ? "#0099ff" : "#eee"
+                        d.properties.color = countries.includes(name.toLowerCase().trim()) ? "#00BFFF" : "#eee"
                     })
                     map.getSource("maine").setData(geojson)
 
@@ -104,7 +105,7 @@
                     'fill-color': ['get', 'color'],
                     'fill-opacity': 1
                 }
-            });
+            }, 'country-label');
 
 
             map.addLayer({
@@ -154,7 +155,10 @@
                         30,
                         750,
                         40
-                    ]
+                    ],
+
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': '#fff'
                 }
             });
 
@@ -202,7 +206,27 @@
                 );
             });
 
-            map.on('click', 'unclustered-point', (e) => {
+            // map.on('click', 'unclustered-point', showPopup(e));
+            
+            map.on('mouseenter', 'unclustered-point', showPopup);
+            map.on('mouseleave', 'unclustered-point', () => { popup && popup.remove() });
+
+            map.on('mouseenter', 'clusters', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'clusters', () => {
+                map.getCanvas().style.cursor = '';
+            });
+            map.on('mouseenter', 'unclustered-point', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'unclustered-point', () => {
+                map.getCanvas().style.cursor = '';
+            });
+
+
+            function showPopup(e) {
+                console.log('e', e);
                 const coordinates = e.features[0].geometry.coordinates.slice();
                 const props = e.features[0].properties;
 
@@ -218,41 +242,20 @@
                         <div>Mobile Operators: ${props['No. of Mobile Operators']}</div>
                     </div>
                 `
-                new mapboxgl.Popup()
+                popup = new mapboxgl.Popup()
                     .setLngLat(coordinates)
                     .setHTML(description)
                     .addTo(map);
-            });
-
-            map.on('mouseenter', 'clusters', () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-            map.on('mouseleave', 'clusters', () => {
-                map.getCanvas().style.cursor = '';
-            });
-            map.on('mouseenter', 'unclustered-point', () => {
-                map.getCanvas().style.cursor = 'pointer';
-            });
-            map.on('mouseleave', 'unclustered-point', () => {
-                map.getCanvas().style.cursor = '';
-            });
-
+            }
         });
 
         function buildPins(data, cities) {
-
-            console.log('data,cities', data, cities);
-
             const citiesList = []
             data.forEach(d => {
                 d['Locations/ PoPs'].split(",").forEach(city => {
-
                     const res = cities.find(c => c.city_ascii.toLowerCase() === city.trim().toLowerCase())
                     if (!res) { console.log(city, res); return; }
-
-                    console.log('res', res);
                     const { lat, lng } = res;
-
                     citiesList.push({
                         country: d.Country,
                         city: city.trim(),
@@ -263,8 +266,6 @@
                     })
                 })
             })
-
-            console.log('citiesList', citiesList);
         }
     </script>
 
