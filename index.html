@@ -33,8 +33,9 @@
             zoom: 0,
             center: [7.5, 58],
             style: 'mapbox://styles/mapbox/light-v11',
-            antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
-            projection: 'mercator'
+            // antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
+            projection: 'mercator',
+            renderWorldCopies: false,
         });
 
         let popup;
@@ -61,14 +62,21 @@
                     console.log('data, geojson', data, geojson);
 
                     const countries = [...new Set(data.map(d => d.Country.toLowerCase().trim()))]
-                    console.log('countries', countries);
+
+                    const cColors = new Map()
+                    data.map(d => {
+                        const name = d.Country.toLowerCase().trim()
+                        const color = d['Country color']
+                        cColors.set(name, color)
+                    })
+
+                    console.log('cColors', cColors);
 
                     geojson.features.map(d => {
-                        const name = d.properties.name
-                        if (countries.includes(name.toLowerCase().trim())) {
-                            console.log('name', name);
-                        }
-                        d.properties.color = countries.includes(name.toLowerCase().trim()) ? "#00BFFF" : "#eee"
+                        const name = d.properties.name.toLowerCase().trim()
+
+
+                        d.properties.color = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "#00BFFF" : "#eee"
                     })
                     map.getSource("maine").setData(geojson)
 
