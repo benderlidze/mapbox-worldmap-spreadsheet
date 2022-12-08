@@ -197,7 +197,10 @@
                 }
             });
 
-            // inspect a cluster on click
+            map.on('click', 'maine', (e) => {
+                console.log('e', e.features[0]);
+            })
+
             map.on('click', 'clusters', (e) => {
                 const features = map.queryRenderedFeatures(e.point, {
                     layers: ['clusters']
