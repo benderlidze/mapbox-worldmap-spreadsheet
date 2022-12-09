@@ -31,7 +31,7 @@
         const map = new mapboxgl.Map({
             container: 'map',
             zoom: 1,
-            center: {lng: 0, lat: 25},
+            center: { lng: 0, lat: 25 },
             style: 'mapbox://styles/mapbox/light-v11',
             // antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
             projection: 'mercator',
@@ -39,13 +39,13 @@
         });
 
         let popup;
+        const countryPopup = new mapboxgl.Popup().addTo(map);
 
         // add the custom style layer to the map
         map.on('load', () => {
 
             //map.getStyle().layers.filter(d => d.id.includes("-label") && d.id !== 'country-label').forEach(d => {
             map.getStyle().layers.filter(d => d.id.includes("-label")).forEach(d => {
-                console.log('d', d);
                 map.setLayoutProperty(d.id, 'visibility', 'none');
             })
 
@@ -60,7 +60,6 @@
                 .then(json => {
 
                     const [data, geojson] = json;
-                    console.log('data, geojson', data, geojson);
 
                     const countries = [...new Set(data.map(d => d.Country.toLowerCase().trim()))]
 
@@ -71,13 +70,11 @@
                         cColors.set(name, color)
                     })
 
-                    console.log('cColors', cColors);
-
                     geojson.features.map(d => {
                         const name = d.properties.name.toLowerCase().trim()
 
 
-                        d.properties.color = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "#0050ff" : "#eee"
+                        d.properties.color = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "#0099FF" : "#eee"
                     })
                     map.getSource("maine").setData(geojson)
 
@@ -134,7 +131,7 @@
                 type: 'geojson',
                 'data': { type: 'FeatureCollection', features: Array() },
                 cluster: true,
-                clusterMaxZoom: 14, // Max zoom to cluster points on
+                clusterMaxZoom: 4, // Max zoom to cluster points on
                 clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
             });
 
@@ -221,7 +218,7 @@
             });
 
             // map.on('click', 'unclustered-point', showPopup(e));
-
+            let hideCountryName = false;
             map.on('mouseenter', 'unclustered-point', showPopup);
             map.on('mouseleave', 'unclustered-point', () => { popup && popup.remove() });
 
@@ -231,16 +228,36 @@
             map.on('mouseleave', 'clusters', () => {
                 map.getCanvas().style.cursor = '';
             });
+            map.on('mousemove', 'unclustered-point', () => {
+                hideCountryName = true
+                countryPopup.remove()
+            })
             map.on('mouseenter', 'unclustered-point', () => {
+                hideCountryName = true
+                countryPopup.remove()
                 map.getCanvas().style.cursor = 'pointer';
             });
             map.on('mouseleave', 'unclustered-point', () => {
                 map.getCanvas().style.cursor = '';
+                hideCountryName = false
+            });
+
+
+            map.on('mousemove', 'maine', (e) => {
+                const props = e.features[0].properties;
+                const description = `<div>${props['name']}</div>`
+                !hideCountryName && countryPopup
+                    .setLngLat(e.lngLat)
+                    .setHTML(description)
+                    .addTo(map)
+
+            });
+            map.on('mouseleave', 'maine', () => {
+                countryPopup.remove()
             });
 
 
             function showPopup(e) {
-                console.log('e', e);
                 const coordinates = e.features[0].geometry.coordinates.slice();
                 const props = e.features[0].properties;
 
@@ -248,7 +265,6 @@
                     coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
                 }
 
-                console.log('props', props);
                 const description = `
                     <div>
                         <h3>${props['Locations/ PoPs']}</h3>
@@ -268,7 +284,7 @@
             data.forEach(d => {
                 d['Locations/ PoPs'].split(",").forEach(city => {
                     const res = cities.find(c => c.city_ascii.toLowerCase() === city.trim().toLowerCase())
-                    if (!res) { console.log(city, res); return; }
+                    if (!res) { return; }
                     const { lat, lng } = res;
                     citiesList.push({
                         country: d.Country,
