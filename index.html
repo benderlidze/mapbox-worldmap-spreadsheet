@@ -30,8 +30,8 @@
         mapboxgl.accessToken = 'pk.eyJ1Ijoic3VqYW5jaGFrcmFib3J0eSIsImEiOiJja2Q5MzBuc3owenplMnBzY2I0eDYwdDhvIn0.imItePLDlYNF2BGVde_mkw';
         const map = new mapboxgl.Map({
             container: 'map',
-            zoom: 0,
-            center: [7.5, 58],
+            zoom: 1,
+            center: {lng: 0, lat: 25},
             style: 'mapbox://styles/mapbox/light-v11',
             // antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
             projection: 'mercator',
@@ -43,7 +43,8 @@
         // add the custom style layer to the map
         map.on('load', () => {
 
-            map.getStyle().layers.filter(d => d.id.includes("-label") && d.id !== 'country-label').forEach(d => {
+            //map.getStyle().layers.filter(d => d.id.includes("-label") && d.id !== 'country-label').forEach(d => {
+            map.getStyle().layers.filter(d => d.id.includes("-label")).forEach(d => {
                 console.log('d', d);
                 map.setLayoutProperty(d.id, 'visibility', 'none');
             })
@@ -76,7 +77,7 @@
                         const name = d.properties.name.toLowerCase().trim()
 
 
-                        d.properties.color = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "#00BFFF" : "#eee"
+                        d.properties.color = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "#0050ff" : "#eee"
                     })
                     map.getSource("maine").setData(geojson)
 
@@ -151,11 +152,11 @@
                     'circle-color': [
                         'step',
                         ['get', 'point_count'],
-                        '#51bbd6',
+                        '#ef6805',
                         100,
-                        '#f1f075',
+                        '#ef6805',
                         750,
-                        '#f28cb1'
+                        '#ef6805'
                     ],
                     'circle-radius': [
                         'step',
@@ -180,7 +181,7 @@
                 layout: {
                     'text-field': ['get', 'point_count_abbreviated'],
                     'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-                    'text-size': 12
+                    'text-size': 12,
                 }
             });
 
@@ -190,7 +191,7 @@
                 source: 'earthquakes',
                 filter: ['!', ['has', 'point_count']],
                 paint: {
-                    'circle-color': '#11b4da',
+                    'circle-color': '#ef6805',
                     'circle-radius': 6,
                     'circle-stroke-width': 1,
                     'circle-stroke-color': '#fff'
@@ -251,8 +252,8 @@
                 const description = `
                     <div>
                         <h3>${props['Locations/ PoPs']}</h3>
-                        <div>Fixed-Line Carriers: ${props['No. of Fixed-Line Carriers']}</div>
-                        <div>Mobile Operators: ${props['No. of Mobile Operators']}</div>
+                        <div>Fixed-Line: ${props['No. of Fixed-Line Carriers']}</div>
+                        <div>Mobile: ${props['No. of Mobile Operators']}</div>
                     </div>
                 `
                 popup = new mapboxgl.Popup()
