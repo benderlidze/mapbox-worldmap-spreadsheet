@@ -21,6 +21,10 @@
             bottom: 0;
             width: 100%;
         }
+
+        .mapboxgl-popup-content {
+            font-size: 15px;
+        }
     </style>
 </head>
 
@@ -39,7 +43,7 @@
         });
 
         let popup;
-        const countryPopup = new mapboxgl.Popup().addTo(map);
+        const countryPopup = new mapboxgl.Popup({ closeButton: false }).addTo(map);
 
         // add the custom style layer to the map
         map.on('load', () => {
@@ -48,8 +52,6 @@
             map.getStyle().layers.filter(d => d.id.includes("-label")).forEach(d => {
                 map.setLayoutProperty(d.id, 'visibility', 'none');
             })
-
-
 
             Promise.all([
                 d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSqQjy9hjLj-g8SP94pYNZRyxaVMsj_TUEtDpApbxQHrlF-AtEgLJ9_rMKi4PX7mscvgLTRNvOqFlG7/pub?output=csv"),
@@ -245,7 +247,7 @@
 
             map.on('mousemove', 'maine', (e) => {
                 const props = e.features[0].properties;
-                const description = `<div>${props['name']}</div>`
+                const description = `<h3>${props['name']}</h3>`
                 !hideCountryName && countryPopup
                     .setLngLat(e.lngLat)
                     .setHTML(description)
@@ -272,7 +274,7 @@
                         <div>Mobile: ${props['No. of Mobile Operators']}</div>
                     </div>
                 `
-                popup = new mapboxgl.Popup()
+                popup = new mapboxgl.Popup({ closeButton: false })
                     .setLngLat(coordinates)
                     .setHTML(description)
                     .addTo(map);
