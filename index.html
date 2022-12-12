@@ -225,6 +225,7 @@
 
             // map.on('click', 'unclustered-point', showPopup(e));
             let hideCountryName = false;
+            map.on('click', 'unclustered-point', showPopup);
             map.on('mouseenter', 'unclustered-point', showPopup);
             map.on('mouseleave', 'unclustered-point', () => { popup && popup.remove() });
 
@@ -249,19 +250,20 @@
             });
 
 
-            map.on('mousemove', 'maine', (e) => {
+            map.on('mousemove', 'maine', showCountryInfo);
+            map.on('click', 'maine', showCountryInfo);
+            map.on('mouseleave', 'maine', () => {
+                countryPopup.remove()
+            });
+
+            function showCountryInfo(e) {
                 const props = e.features[0].properties;
                 const description = `<h3>${props['name']}</h3>`
                 !hideCountryName && countryPopup
                     .setLngLat(e.lngLat)
                     .setHTML(description)
                     .addTo(map)
-
-            });
-            map.on('mouseleave', 'maine', () => {
-                countryPopup.remove()
-            });
-
+            }
 
             function showPopup(e) {
                 const coordinates = e.features[0].geometry.coordinates.slice();
