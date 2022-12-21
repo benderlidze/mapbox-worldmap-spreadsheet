@@ -266,7 +266,7 @@
             map.on('mousemove', 'maine', showCountryInfo);
             map.on('click', 'maine', showCountryInfo);
             map.on('mouseleave', 'maine', () => {
-                // countryPopup.remove()
+                countryPopup.remove()
             });
 
             function showCountryInfo(e) {
