@@ -8,11 +8,14 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
 
     <style>
         body {
             margin: 0;
             padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 100;
         }
 
         #map {
@@ -23,11 +26,21 @@
         }
 
         .mapboxgl-popup-content {
-            font-size: 15px;
+            font-size: 16px;
+            font-weight: 100;
+            font-family: 'Montserrat', sans-serif;
+            color: black;
+            border-radius: 10px !important;
         }
 
         .mapboxgl-ctrl-logo {
             opacity: 0;
+        }
+
+        h4,
+        h5 {
+            margin: 0px;
+            padding: 0px;
         }
     </style>
 </head>
@@ -155,11 +168,11 @@
                     'circle-color': [
                         'step',
                         ['get', 'point_count'],
-                        '#ef6805',
+                        '#243444',
                         100,
-                        '#ef6805',
+                        '#243444',
                         750,
-                        '#ef6805'
+                        '#243444'
                     ],
                     'circle-radius': [
                         'step',
@@ -172,21 +185,21 @@
                     ],
 
                     'circle-stroke-width': 1,
-                    'circle-stroke-color': '#fff'
+                    'circle-stroke-color': '#243444'
                 }
             });
 
-            map.addLayer({
-                id: 'cluster-count',
-                type: 'symbol',
-                source: 'earthquakes',
-                filter: ['has', 'point_count'],
-                layout: {
-                    'text-field': ['get', 'point_count_abbreviated'],
-                    'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-                    'text-size': 12,
-                }
-            });
+            // map.addLayer({
+            //     id: 'cluster-count',
+            //     type: 'symbol',
+            //     source: 'earthquakes',
+            //     filter: ['has', 'point_count'],
+            //     layout: {
+            //         'text-field': ['get', 'point_count_abbreviated'],
+            //         'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            //         'text-size': 12,
+            //     }
+            // });
 
             map.addLayer({
                 id: 'unclustered-point',
@@ -194,7 +207,7 @@
                 source: 'earthquakes',
                 filter: ['!', ['has', 'point_count']],
                 paint: {
-                    'circle-color': '#ef6805',
+                    'circle-color': '#ff9d00',
                     'circle-radius': 6,
                     'circle-stroke-width': 1,
                     'circle-stroke-color': '#fff'
@@ -253,7 +266,7 @@
             map.on('mousemove', 'maine', showCountryInfo);
             map.on('click', 'maine', showCountryInfo);
             map.on('mouseleave', 'maine', () => {
-                countryPopup.remove()
+                // countryPopup.remove()
             });
 
             function showCountryInfo(e) {
@@ -276,8 +289,8 @@
                 const description = `
                     <div>
                         <h3>${props['Locations/ PoPs']}</h3>
-                        <div>Fixed-Line: ${props['No. of Fixed-Line Carriers']}</div>
-                        <div>Mobile: ${props['No. of Mobile Operators']}</div>
+                        <h4>Fixed-Line: ${props['No. of Fixed-Line Carriers']}</h4>
+                        <h4>Mobile: ${props['No. of Mobile Operators']}</h4>
                     </div>
                 `
                 popup = new mapboxgl.Popup({ closeButton: false })
