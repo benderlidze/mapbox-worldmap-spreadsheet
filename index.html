@@ -65,8 +65,9 @@
         // add the custom style layer to the map
         map.on('load', () => {
 
-            map.setPaintProperty("water","fill-color","#243444")
-            
+            map.setPaintProperty("water", "fill-color", "#243444")
+
+
             //map.getStyle().layers.filter(d => d.id.includes("-label") && d.id !== 'country-label').forEach(d => {
             map.getStyle().layers.filter(d => d.id.includes("-label")).forEach(d => {
                 map.setLayoutProperty(d.id, 'visibility', 'none');
@@ -143,7 +144,7 @@
                 'source': 'maine',
                 'layout': {},
                 'paint': {
-                    'line-color': '#fff',
+                    'line-color': '#243444',
                     'line-width': 1
                 }
             });
@@ -187,7 +188,8 @@
                     ],
 
                     'circle-stroke-width': 1,
-                    'circle-stroke-color': 'white'
+                    'circle-stroke-color': 'white',
+                    'circle-opacity': 0.8
                 }
             });
 
