@@ -42,6 +42,10 @@
             margin: 0px;
             padding: 0px;
         }
+
+        .mapboxgl-ctrl-bottom-right {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -57,6 +61,7 @@
             // antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
             projection: 'mercator',
             renderWorldCopies: false,
+            cooperativeGestures: true
         });
 
         let popup;
