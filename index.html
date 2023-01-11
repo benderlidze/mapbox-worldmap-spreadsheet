@@ -63,6 +63,9 @@
             renderWorldCopies: false,
             cooperativeGestures: true
         });
+        const nav = new mapboxgl.NavigationControl();
+
+        map.addControl(nav, 'bottom-left');
 
         let popup;
         const countryPopup = new mapboxgl.Popup({ closeButton: false }).addTo(map);
@@ -70,7 +73,7 @@
         // add the custom style layer to the map
         map.on('load', () => {
 
-            map.setPaintProperty("water", "fill-color", "#243444")
+            map.setPaintProperty("water", "fill-color", "#fff")
 
 
             //map.getStyle().layers.filter(d => d.id.includes("-label") && d.id !== 'country-label').forEach(d => {
