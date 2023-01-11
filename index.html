@@ -102,9 +102,9 @@
 
                     geojson.features.map(d => {
                         const name = d.properties.name.toLowerCase().trim()
-
-
                         d.properties.color = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "#0099FF" : "#eee"
+                        d.properties.border = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "black" : "#dbdbdb"
+
                     })
                     map.getSource("maine").setData(geojson)
 
@@ -152,7 +152,7 @@
                 'source': 'maine',
                 'layout': {},
                 'paint': {
-                    'line-color': '#243444',
+                    'line-color': ['get', 'border'],
                     'line-width': 1
                 }
             });
