@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Map</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 100;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+
+        .mapboxgl-popup-content {
+            font-size: 16px;
+            font-weight: 100;
+            font-family: 'Montserrat', sans-serif;
+            color: black;
+            border-radius: 10px !important;
+        }
+
+        .mapboxgl-ctrl-logo {
+            opacity: 0;
+        }
+
+        h4,
+        h5 {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        .mapboxgl-ctrl-bottom-right {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZGFuY3lhcmEiLCJhIjoiY2xqZm4wMDQyMDI3ZTNocDlwd2xvYXJncSJ9.cE1f0KLsDCZypf4iyCfOlw';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            zoom: 1,
+            center: { lng: 0, lat: 25 },
+            style: 'mapbox://styles/mapbox/light-v11',
+            // antialias: true, // create the gl context with MSAA antialiasing, so custom layers are antialiased
+            projection: 'mercator',
+            renderWorldCopies: false,
+            cooperativeGestures: true
+        });
+        const nav = new mapboxgl.NavigationControl();
+
+        map.addControl(nav, 'bottom-left');
+
+        let popup;
+        const countryPopup = new mapboxgl.Popup({ closeButton: false }).addTo(map);
+
+        // add the custom style layer to the map
+        map.on('load', () => {
+
+            map.setPaintProperty("water", "fill-color", "#fff")
+
+
+            //map.getStyle().layers.filter(d => d.id.includes("-label") && d.id !== 'country-label').forEach(d => {
+            map.getStyle().layers.filter(d => d.id.includes("-label")).forEach(d => {
+                map.setLayoutProperty(d.id, 'visibility', 'none');
+            })
+
+            Promise.all([
+                d3.csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vSqQjy9hjLj-g8SP94pYNZRyxaVMsj_TUEtDpApbxQHrlF-AtEgLJ9_rMKi4PX7mscvgLTRNvOqFlG7/pub?output=csv"),
+                //d3.csv("worldcities.csv"),
+                fetch("world-administrative-boundaries_v1.json").then(d => d.json())
+            ])
+
+                .then(json => {
+
+                    const [data, geojson] = json;
+
+                    const countries = [...new Set(data.map(d => d.Country.toLowerCase().trim()))]
+
+                    const cColors = new Map()
+                    data.map(d => {
+                        const name = d.Country.toLowerCase().trim()
+                        const color = d['Country color']
+                        cColors.set(name, color)
+                    })
+
+                    geojson.features.map(d => {
+                        const name = d.properties.name.toLowerCase().trim()
+                        d.properties.color = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "#0099FF" : "#eee"
+                        d.properties.border = cColors.has(name) ? cColors.get(name) !== '' ? cColors.get(name) : "black" : "#dbdbdb"
+
+                    })
+                    map.getSource("maine").setData(geojson)
+
+                    const pins = data.map(d => {
+                        const { lat, lng } = d;
+                        return {
+                            "type": "Feature",
+                            "properties": { ...d },
+                            "geometry": {
+                                "coordinates": [
+                                    +lng,
+                                    +lat
+                                ],
+                                "type": "Point"
+                            }
+                        }
+                    })
+                    map.getSource("earthquakes").setData({
+                        'type': 'FeatureCollection',
+                        'features': pins
+                    })
+                })
+
+
+            map.addSource('maine', {
+                'type': 'geojson',
+                'data': { type: 'FeatureCollection', features: Array() }
+            });
+
+            map.addLayer({
+                'id': 'maine',
+                'type': 'fill',
+                'source': 'maine', // reference the data source
+                'layout': {},
+                'paint': {
+                    'fill-color': ['get', 'color'],
+                    'fill-opacity': 1
+                }
+            }, 'country-label');
+
+
+            map.addLayer({
+                'id': 'outline',
+                'type': 'line',
+                'source': 'maine',
+                'layout': {},
+                'paint': {
+                    'line-color': ['get', 'border'],
+                    'line-width': 1
+                }
+            });
+
+            map.addSource('earthquakes', {
+                type: 'geojson',
+                'data': { type: 'FeatureCollection', features: Array() },
+                cluster: true,
+                clusterMaxZoom: 1, // Max zoom to cluster points on
+                clusterRadius: 50 // Radius of each cluster when clustering points (defaults to 50)
+            });
+
+            map.addLayer({
+                id: 'clusters',
+                type: 'circle',
+                source: 'earthquakes',
+                filter: ['has', 'point_count'],
+                paint: {
+                    // Use step expressions (https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-step)
+                    // with three steps to implement three types of circles:
+                    //   * Blue, 20px circles when point count is less than 100
+                    //   * Yellow, 30px circles when point count is between 100 and 750
+                    //   * Pink, 40px circles when point count is greater than or equal to 750
+                    'circle-color': [
+                        'step',
+                        ['get', 'point_count'],
+                        '#ff9d00',
+                        100,
+                        '#ff9d00',
+                        750,
+                        '#ff9d00'
+                    ],
+                    'circle-radius': [
+                        'step',
+                        ['get', 'point_count'],
+                        20,
+                        100,
+                        30,
+                        750,
+                        40
+                    ],
+
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': 'white',
+                    'circle-opacity': 0.8
+                }
+            });
+
+            // map.addLayer({
+            //     id: 'cluster-count',
+            //     type: 'symbol',
+            //     source: 'earthquakes',
+            //     filter: ['has', 'point_count'],
+            //     layout: {
+            //         'text-field': ['get', 'point_count_abbreviated'],
+            //         'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            //         'text-size': 12,
+            //     }
+            // });
+
+            map.addLayer({
+                id: 'unclustered-point',
+                type: 'circle',
+                source: 'earthquakes',
+                filter: ['!', ['has', 'point_count']],
+                paint: {
+                    'circle-color': '#ff9d00',
+                    'circle-radius': 6,
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': '#fff'
+                }
+            });
+
+            map.on('click', 'maine', (e) => {
+                console.log('name = ', e.features[0].properties.name);
+            })
+
+            map.on('click', 'clusters', (e) => {
+                const features = map.queryRenderedFeatures(e.point, {
+                    layers: ['clusters']
+                });
+                const clusterId = features[0].properties.cluster_id;
+                map.getSource('earthquakes').getClusterExpansionZoom(
+                    clusterId,
+                    (err, zoom) => {
+                        if (err) return;
+
+                        map.easeTo({
+                            center: features[0].geometry.coordinates,
+                            zoom: zoom
+                        });
+                    }
+                );
+            });
+
+            // map.on('click', 'unclustered-point', showPopup(e));
+            let hideCountryName = false;
+            map.on('click', 'unclustered-point', showPopup);
+            map.on('mouseenter', 'unclustered-point', showPopup);
+            map.on('mouseleave', 'unclustered-point', () => { popup && popup.remove() });
+
+            map.on('mouseenter', 'clusters', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'clusters', () => {
+                map.getCanvas().style.cursor = '';
+            });
+            map.on('mousemove', 'unclustered-point', () => {
+                hideCountryName = true
+                countryPopup.remove()
+            })
+            map.on('mouseenter', 'unclustered-point', () => {
+                hideCountryName = true
+                countryPopup.remove()
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'unclustered-point', () => {
+                map.getCanvas().style.cursor = '';
+                hideCountryName = false
+            });
+
+
+            map.on('mousemove', 'maine', showCountryInfo);
+            map.on('click', 'maine', showCountryInfo);
+            map.on('mouseleave', 'maine', () => {
+                countryPopup.remove()
+            });
+
+            function showCountryInfo(e) {
+                const props = e.features[0].properties;
+                const description = `<h3>${props['name']}</h3>`
+                !hideCountryName && countryPopup
+                    .setLngLat(e.lngLat)
+                    .setHTML(description)
+                    .addTo(map)
+            }
+
+            function showPopup(e) {
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const props = e.features[0].properties;
+
+                while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                    coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                }
+
+                const description = `
+                    <div>
+                        <h3>${props['Locations/ PoPs']}</h3>
+                        <h4>Fixed-Line: ${props['No. of Fixed-Line Carriers']}</h4>
+                        <h4>Mobile: ${props['No. of Mobile Operators']}</h4>
+                    </div>
+                `
+                popup = new mapboxgl.Popup({ closeButton: false })
+                    .setLngLat(coordinates)
+                    .setHTML(description)
+                    .addTo(map);
+            }
+        });
+
+        function buildPins(data, cities) {
+            const citiesList = []
+            data.forEach(d => {
+                d['Locations/ PoPs'].split(",").forEach(city => {
+                    const res = cities.find(c => c.city_ascii.toLowerCase() === city.trim().toLowerCase())
+                    if (!res) { return; }
+                    const { lat, lng } = res;
+                    citiesList.push({
+                        country: d.Country,
+                        city: city.trim(),
+                        props: {
+                            carries: d['No. of Fixed-Line Carriers'],
+                            mobile: d['No. of Mobile Operators'],
+                        }
+                    })
+                })
+            })
+        }
+    </script>
+
+</body>
+
+</html>
